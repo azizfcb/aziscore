@@ -1,12 +1,24 @@
 .manipulator {
+    width: 30%;
+    padding: 7px;
+    height:200px;
     position: fixed;
     right: 0;
     bottom: 0;
-    width: 25%;
     background-color:orange;	
     z-index: 999;
 }
 
 .button-apply{
+    width: 125px;
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
+}
+
+.button-apply button{
+    display: block;
+    width: 45%;
     float: right;
+
 }

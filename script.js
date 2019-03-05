@@ -1,49 +1,72 @@
 $(document).ready(function () {
 
+//    $(' td.cell_ia.icons').html('<a class="search-aziscore" href="#" ><span>&#128269;</span</a>');
+    var htmlString = '<div class="manipulator" id="small" style="width: 30%;padding: 7px;height: 50%;">' +
+            '    <div>' +
+            '        Goal Number >= <input id="range" type="range" name="points" min="0" max="10" value="0">' +
+            '        <span id="range-value">0</span>' +
+            '    </div>' +
+            '    <div>Goal Difference >= <input id="difference" type="range" name="points" min="0" max="15">' +
+            '        <span id="range-value">0</span>' +
+            '    </div>' +
+            '    <br>' +
+            '    <br>' +
+            '    Match stage: <form action="" style="">' +
+            '        <input type="radio" name="stage" value="live"> Live<br>' +
+            '        <input type="radio" name="stage" value="finished"> Finished<br>' +
+            '        <input type="radio" name="stage" value="scheduled"> Scheduled</form>' +
+            '    <div class="button-apply" style="width: 30%;">' +
+            '        <button id="reset" style="display: block;width: 45%;float: right;">Reset Display</button>' +
+            '        <button id="apply" style=" display: block;width: 45%;float: right;">Apply Criterias</button>' +
+            '' +
+            '    </div>' +
+            '</div>';
 
-    var goalNumberinput = '<input id="range" type="range" name="points" min="0" max="10" value="0"/><span id="range-value">0</span>'
-    var stage = '<form action="">\n\
-<input type="radio" name="stage" value="live"> Live<br>\n\
-<input type="radio" name="stage" value="finished"> Finished<br>\n\
-<input type="radio" name="stage" value="scheduled"> Scheduled</form>'
-    var apply_button = '<div class="button-apply">\n\
-<button id="apply">Apply Criterias</button>\n\
-<button id="reset">Reset Display</button>\n\
-</div>'
 
-    $("<div class='manipulator' id='small' />").appendTo("body");
+    $(htmlString).appendTo("body");
 
-    $(goalNumberinput).appendTo('#small')
-    $(stage).appendTo('#small')
-    $(apply_button).appendTo('#small')
-
-    var stageValue = $(':checked').val()
+    var stageValue = undefined
     var rangeValue = $('#range').val()
     var halftime = undefined
     var difference = undefined
 
     $('#range').on('input', function () {
-        $('#range-value').text($(this).val())
+        rangeValue = $(this).val();
+        parseInt($('#range-value').text($(this).val()))
     })
 
     $("#apply").click(function () {
+        stageValue = $(':checked').val()
+        console.log(stageValue,rangeValue,halftime,difference)
         displayOnly(stageValue, rangeValue, difference, halftime)
     });
-    $("#undefined").click(function () {
+    $("#reset").click(function () {
         resetSelection()
     });
 
-    console.log("done");
+    console.log("extension aziscore loaded");
 });
 
-function displayOnly(stage, goalNumber, difference, halftime) {
+function displayOnly(stage, goalNumber, difference, sameHalftimeScore, h) {
 
     resetSelection()
 
     var stages = ['live', 'finished', 'scheduled']
     var globalSelection = $('#fs > div > table > tbody > tr');
     if (stages.includes(stage)) {
-        $(globalSelection).filter(':not(".stage-' + stage + '")').css('display', 'none')
+        $(globalSelection)
+                .filter(':not(".stage-' + stage + '")')
+                .filter(function () {
+                    if (h == 2) {
+                        return parseInt($(this).find('.cell_aa.timer > span').text()) <= 45
+                    } else if (h == 1) {
+                        return parseInt($(this).find('.cell_aa.timer > span').text()) > 45
+                    } else {
+                        return false;
+                    }
+                })
+                .css('display', 'none')
+
     }
     if (Number.isInteger(parseInt(goalNumber))) {
         $(globalSelection).filter(function () {
@@ -57,13 +80,12 @@ function displayOnly(stage, goalNumber, difference, halftime) {
             return getDifferenceOf(score, difference)
         }).css('display', 'none')
     }
-    if (Number.isInteger(parseInt(halftime))) {
-        $('#fs > div > table > tbody > tr:visible').filter(function () {
+    if (Number.isInteger(parseInt(sameHalftimeScore))) {
+        $('#fs > div tbody > tr:visible').filter(function () {
 
             var score = $(this).find('.cell_sa.score').text().replace(/\s/g, '')
-            var HTscore = $(this).find('.cell_sb.part-top').text().replace(/\s|(|)/g, '');
-            return parseInt($(this).find('.cell_aa.timer > span').text()) <= (45 * halftime)
-//            if($(this).find('.cell_aa.timer > span:visible').each(function(){ console.log($(this).text())}))
+            var HTscore = $(this).find('.cell_sb.part-top').text().replace(/\s|\(|\)/g, '');
+//            return parseInt($(this).find('.cell_aa.timer > span').text()) <= (45 * halftime)
             return score != HTscore;
         }).css('display', 'none')
     }
@@ -84,7 +106,7 @@ function goalScoreComparedTo(score, goalNumber) {
     if (score.length == 1 || score[0].length == 0 || score[1].length == 0) {
         return true
     } else {
-        return parseInt(score[0]) + parseInt(score[1]) <= goalNumber
+        return parseInt(score[0]) + parseInt(score[1]) < goalNumber
     }
 }
 
