@@ -1,0 +1,12 @@
+.manipulator {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    width: 25%;
+    background-color:orange;	
+    z-index: 999;
+}
+
+.button-apply{
+    float: right;
+}

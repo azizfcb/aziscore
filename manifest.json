@@ -1,0 +1,18 @@
+{
+    "name": "Aziscore",
+    "description": "aziscore extends the flashscore website",
+    "version": "0.1.0",
+    "content_scripts": [
+        {
+            "matches": ["https://*/*", "http://*/*"],
+            "css": ["style.css"],
+            "js": ["jquery.js", "script.js"]
+        }
+    ],
+    "manifest_version": 2,
+    "icons": {
+        "16": "aziscore.png",
+        "48": "aziscore.png",
+        "128": "aziscore.png"
+    }
+}
