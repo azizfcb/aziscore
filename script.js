@@ -37,7 +37,6 @@ $(document).ready(function () {
 
     $("#apply").click(function () {
         stageValue = $(':checked').val()
-        console.log(stageValue,rangeValue,halftime,difference)
         displayOnly(stageValue, rangeValue, difference, halftime)
     });
     $("#reset").click(function () {
@@ -51,46 +50,52 @@ function displayOnly(stage, goalNumber, difference, sameHalftimeScore, h) {
 
     resetSelection()
 
-    var stages = ['live', 'finished', 'scheduled']
-    var globalSelection = $('#fs > div > table > tbody > tr');
+    var stages = ['live', 'scheduled', 'finished']
+    var globalSelection = $('.event__match');
     if (stages.includes(stage)) {
-        $(globalSelection)
-                .filter(':not(".stage-' + stage + '")')
-                .filter(function () {
-                    if (h == 2) {
-                        return parseInt($(this).find('.cell_aa.timer > span').text()) <= 45
-                    } else if (h == 1) {
-                        return parseInt($(this).find('.cell_aa.timer > span').text()) > 45
-                    } else {
-                        return false;
-                    }
-                })
-                .css('display', 'none')
-
+        if (stage == 'finished') {
+            $(globalSelection)
+                    .filter('.event__match--live,.event__match--scheduled')
+                    .css('display', 'none')
+        } else {
+            $(globalSelection)
+                    .filter(':not(".event__match--' + stage + '")')
+                    .css('display', 'none')
+        }
+    }
+    if (h == 2) {
+        $('.event__match:visible').filter(function () {
+            if (h == 2) {
+                return parseInt($(this).find('.event__stage.event__stage--block > span').text()) <= 45
+            } else if (h == 1) {
+                return parseInt($(this).find('.event__stage.event__stage--block > span').text()) > 45
+            } else {
+                return false;
+            }
+        })
     }
     if (Number.isInteger(parseInt(goalNumber))) {
-        $(globalSelection).filter(function () {
-            var score = $(this).find('.cell_sa.score').text().replace(/\s/g, '').split("-")
+        $('.event__match:visible').filter(function () {
+            var score = $(this).find('.event__scores').text().replace(/\s/g, '').split("-")
             return goalScoreComparedTo(score, goalNumber)
         }).css('display', 'none')
     }
     if (Number.isInteger(parseInt(difference))) {
-        $(globalSelection).filter(function () {
-            var score = $(this).find('.cell_sa.score').text().replace(/\s/g, '').split("-")
+        $('.event__match:visible').filter(function () {
+            var score = $(this).find('.event__scores').text().replace(/\s/g, '').split("-")
             return getDifferenceOf(score, difference)
         }).css('display', 'none')
     }
     if (Number.isInteger(parseInt(sameHalftimeScore))) {
-        $('#fs > div tbody > tr:visible').filter(function () {
-
-            var score = $(this).find('.cell_sa.score').text().replace(/\s/g, '')
-            var HTscore = $(this).find('.cell_sb.part-top').text().replace(/\s|\(|\)/g, '');
+        $('.event__match:visible').filter(function () {
+            var score = $(this).find('.event__scores').text().replace(/\s/g, '')
+            var HTscore = $(this).find('.event__part').text().replace(/\s|\(|\)/g, '');
 //            return parseInt($(this).find('.cell_aa.timer > span').text()) <= (45 * halftime)
             return score != HTscore;
         }).css('display', 'none')
     }
 
-    removeEmptyParentLeagueName()
+//    removeEmptyParentLeagueName()
 }
 
 function getDifferenceOf(score, difference) {
@@ -119,12 +124,12 @@ function sameHTScore(score, goalNumber) {
 }
 
 function resetSelection() {
-    $('#fs > div > table').show()
-    $('#fs > div > table > tbody > tr').show()
+    $('.event__header').show()
+    $('.event__match').show()
 }
-
+// need to wokr on this
 function removeEmptyParentLeagueName() {
-    $('#fs > div > table').filter(function () {
-        return $(this).find('tbody > tr').length == $(this).find('tbody > tr').not(':visible').length
+    $('.event__header').filter(function () {
+        return $(this).find('.event__match').length == $(this).find('.event__match').not(':visible').length
     }).css('display', 'none')
 }
