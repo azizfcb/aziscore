@@ -1,7 +1,7 @@
 .manipulator {
     width: 30%;
     padding: 7px;
-    height:200px;
+    height:130px;
     position: fixed;
     right: 0;
     bottom: 0;
@@ -21,4 +21,8 @@
     width: 45%;
     float: right;
 
+}
+
+.hide-range-matches,.hide-difference-matches,.hide-losing-home-matches,.hide-ng-matches{
+    display: none !important;
 }

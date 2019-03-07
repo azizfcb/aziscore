@@ -1,68 +1,150 @@
 $(document).ready(function () {
-
-//    $(' td.cell_ia.icons').html('<a class="search-aziscore" href="#" ><span>&#128269;</span</a>');
-    var htmlString = '<div class="manipulator" id="small" style="width: 30%;padding: 7px;height: 50%;">' +
-            '    <div>' +
+    var searchUrl = "https://www.youtube.com/results?search_query="
+    var htmlString = '<div class="manipulator" id="small" style="width: 30%;padding: 7px;">' +
+            '    <div style="width:50%;float:left;">' +
             '        Goal Number >= <input id="range" type="range" name="points" min="0" max="10" value="0">' +
             '        <span id="range-value">0</span>' +
             '    </div>' +
-            '    <div>Goal Difference >= <input id="difference" type="range" name="points" min="0" max="15">' +
-            '        <span id="range-value">0</span>' +
+            '    <div style="width:50%;float:right;">Goal Difference == <input id="difference" type="range" name="points" min="0" max="15" value="0">' +
+            '        <span id="difference-value">0</span>' +
             '    </div>' +
-            '    <br>' +
-            '    <br>' +
-            '    Match stage: <form action="" style="">' +
+            '<br><br>' +
+            '    <div style="width:50%;float:left;">' +
+            '    Match stage: <form id="stage-radio-box" action="" style="">' +
             '        <input type="radio" name="stage" value="live"> Live<br>' +
             '        <input type="radio" name="stage" value="finished"> Finished<br>' +
             '        <input type="radio" name="stage" value="scheduled"> Scheduled</form>' +
             '    <div class="button-apply" style="width: 30%;">' +
-            '        <button id="reset" style="display: block;width: 45%;float: right;">Reset Display</button>' +
             '        <button id="apply" style=" display: block;width: 45%;float: right;">Apply Criterias</button>' +
             '' +
             '    </div>' +
+            '    </div>' +
+            '    <div style="width:50%;float:left;">' +
+            '   <input type="checkbox" id="checkbox_same_ht" name="smaeHTScore" value=false>Same halftime score<br>' +
+            '   <input type="checkbox" id="checkbox_losing_home_team" name="home_team_losing" value=false>Home Team Losing<br>' +
+            '   <input type="checkbox" id="NG_matches" name="no_goal_match" value=false>NG matches<br>' +
+            '    </div>' +
+            '    <br>' +
             '</div>';
+
+    $('body').on('mouseenter', '.event__match', function () {
+        if ($(this).find('.search-match').length == 0) {
+            $(this).find(".event__participant--away").append('<a style="float: right;" class="search-match" "href="#" ><span>&#128269;</span</a>')
+        }
+    }).on('mouseleave', '.event__match', function () {
+        $(this).find(".search-match").remove()
+
+    }).on('click', '.search-match', function (event) {
+        event.stopImmediatePropagation
+        var string_to_search_on_on_youtube = getSearchString($(this).closest('.event__match'))
+        console.log(string_to_search_on_on_youtube)
+        window.open(searchUrl + string_to_search_on_on_youtube, '_blank');
+    })
 
 
     $(htmlString).appendTo("body");
 
     var stageValue = undefined
-    var rangeValue = $('#range').val()
+    var rangeValue = undefined
     var halftime = undefined
     var difference = undefined
-
+    // the search icone
+    $(' td.cell_ia.icons').html('<a href="#" ><span>&#128269;</span</a>');
+    // the goal sum 
     $('#range').on('input', function () {
-        rangeValue = $(this).val();
-        parseInt($('#range-value').text($(this).val()))
+        $('#range-value').text(rangeValue = $(this).val())
+    }).on('mouseup', function () {
+        rangeValue = $(this).val()
+        $('.event__match')
+                .removeClass('hide-range-matches')
+                .filter(function () {
+                    var score = getScore($(this))
+                    return goalScoreComparedTo(score, rangeValue)
+                })
+                .addClass('hide-range-matches')
+    })
+    // the difference  
+    $('#difference').on('input', function () {
+        $('#difference-value').text(difference = $(this).val())
+    }).on('mouseup', function () {
+        difference = $(this).val()
+        $('.event__match')
+                .removeClass('hide-difference-matches')
+                .filter(function () {
+                    var score = getScore($(this))
+                    return getDifferenceOf(score, difference)
+                })
+                .addClass('hide-difference-matches')
     })
 
-    $("#apply").click(function () {
-        stageValue = $(':checked').val()
-        displayOnly(stageValue, rangeValue, difference, halftime)
-    });
     $("#reset").click(function () {
         resetSelection()
     });
 
+    $('#checkbox_same_ht').change(function () {
+        if (this.checked) {
+            $('.event__match:visible')
+                    .removeClass('hide-same-ht-matches')
+                    .filter(function () {
+                        var score = $(this).find('.event__scores').text().replace(/\s/g, '')
+                        var HTscore = $(this).find('.event__part').text().replace(/\s|\(|\)/g, '');
+                        return score != HTscore;
+                    }).addClass('hide-same-ht-matches')
+        } else {
+            $('.event__match')
+                    .removeClass('hide-same-ht-matches')
+        }
+    });
+    $('#checkbox_losing_home_team').change(function () {
+        if (this.checked) {
+            $('.event__match')
+                    .removeClass('hide-losing-home-matches')
+                    .filter(function () {
+                        var score = getScore($(this))
+                        return homeTeamLosing(score)
+                    }).addClass('hide-losing-home-matches')
+        } else {
+            $('.event__match')
+                    .removeClass('hide-losing-home-matches')
+        }
+    })
+    $('#NG_matches').change(function () {
+        if (this.checked) {
+            $('.event__match')
+                    .removeClass('hide-ng-matches')
+                    .filter(function () {
+                        var score = getScore($(this))
+                        return no_goals_matches(score)
+                    }).addClass('hide-ng-matches')
+
+        } else {
+            $('.event__match')
+                    .removeClass('hide-ng-matches')
+        }
+    });
+    $('#stage-radio-box').change(function () {
+        var stages = ['live', 'scheduled', 'finished']
+        var stage = $("input[name='stage']:checked").val();
+        var globalSelection = $('.event__match');
+        if (stages.includes(stage)) {
+            if (stage == 'finished') {
+                $(globalSelection)
+                        .filter('.event__match--live,.event__match--scheduled')
+                        .css('display', 'none')
+            } else {
+                $(globalSelection)
+                        .filter(':not(".event__match--' + stage + '")')
+                        .css('display', 'none')
+            }
+        }
+    });
     console.log("extension aziscore loaded");
 });
 
-function displayOnly(stage, goalNumber, difference, sameHalftimeScore, h) {
+function displayOnly(stage, goalNumber, difference, h) {
 
     resetSelection()
 
-    var stages = ['live', 'scheduled', 'finished']
-    var globalSelection = $('.event__match');
-    if (stages.includes(stage)) {
-        if (stage == 'finished') {
-            $(globalSelection)
-                    .filter('.event__match--live,.event__match--scheduled')
-                    .css('display', 'none')
-        } else {
-            $(globalSelection)
-                    .filter(':not(".event__match--' + stage + '")')
-                    .css('display', 'none')
-        }
-    }
     if (h == 2) {
         $('.event__match:visible').filter(function () {
             if (h == 2) {
@@ -74,27 +156,6 @@ function displayOnly(stage, goalNumber, difference, sameHalftimeScore, h) {
             }
         })
     }
-    if (Number.isInteger(parseInt(goalNumber))) {
-        $('.event__match:visible').filter(function () {
-            var score = $(this).find('.event__scores').text().replace(/\s/g, '').split("-")
-            return goalScoreComparedTo(score, goalNumber)
-        }).css('display', 'none')
-    }
-    if (Number.isInteger(parseInt(difference))) {
-        $('.event__match:visible').filter(function () {
-            var score = $(this).find('.event__scores').text().replace(/\s/g, '').split("-")
-            return getDifferenceOf(score, difference)
-        }).css('display', 'none')
-    }
-    if (Number.isInteger(parseInt(sameHalftimeScore))) {
-        $('.event__match:visible').filter(function () {
-            var score = $(this).find('.event__scores').text().replace(/\s/g, '')
-            var HTscore = $(this).find('.event__part').text().replace(/\s|\(|\)/g, '');
-//            return parseInt($(this).find('.cell_aa.timer > span').text()) <= (45 * halftime)
-            return score != HTscore;
-        }).css('display', 'none')
-    }
-
 //    removeEmptyParentLeagueName()
 }
 
@@ -132,4 +193,36 @@ function removeEmptyParentLeagueName() {
     $('.event__header').filter(function () {
         return $(this).find('.event__match').length == $(this).find('.event__match').not(':visible').length
     }).css('display', 'none')
+}
+
+function homeTeamLosing(score) {
+
+    if (score.length == 1 || score[0].length == 0 || score[1].length == 0) {
+        return true
+    } else {
+        return parseInt(score[0]) >= parseInt(score[1])
+    }
+
+}
+
+function no_goals_matches(score) {
+
+    if (score.length == 1 || score[0].length == 0 || score[1].length == 0) {
+        return true
+    } else {
+        return !(parseInt(score[0]) == 0 || parseInt(score[1]) == 0)
+    }
+
+}
+
+function getSearchString(element) {
+    var x = element.find('.event__participant--away').text() 
+    return element.find('.event__participant--home').text() + ' ' + getScore(element, true) + ' ' + x.substring(0,x.length-2)
+}
+
+function getScore(element, split) {
+    if (split) {
+        return element.find('.event__scores').text().replace(/\s/g, '')
+    }
+    return element.find('.event__scores').text().replace(/\s/g, '').split("-")
 }
