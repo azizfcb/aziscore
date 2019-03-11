@@ -15,7 +15,7 @@ $(document).ready(function () {
             '        <input type="radio" name="stage" value="finished"> Finished<br>' +
             '        <input type="radio" name="stage" value="scheduled"> Scheduled</form>' +
             '    <div class="button-apply" style="width: 30%;">' +
-            '        <button id="apply" style=" display: block;width: 45%;float: right;">Apply Criterias</button>' +
+            '        <button id="reset" style=" display: block;width: 45%;float: right;">Reset</button>' +
             '' +
             '    </div>' +
             '    </div>' +
@@ -41,7 +41,6 @@ $(document).ready(function () {
         window.open(searchUrl + string_to_search_on_on_youtube, '_blank');
     })
 
-
     $(htmlString).appendTo("body");
 
     var stageValue = undefined
@@ -54,6 +53,7 @@ $(document).ready(function () {
     $('#range').on('input', function () {
         $('#range-value').text(rangeValue = $(this).val())
     }).on('mouseup', function () {
+        resetHeader()
         rangeValue = $(this).val()
         $('.event__match')
                 .removeClass('hide-range-matches')
@@ -62,11 +62,14 @@ $(document).ready(function () {
                     return goalScoreComparedTo(score, rangeValue)
                 })
                 .addClass('hide-range-matches')
+
+        removeEmptyParentLeagueName()
     })
     // the difference  
     $('#difference').on('input', function () {
         $('#difference-value').text(difference = $(this).val())
     }).on('mouseup', function () {
+        resetHeader()
         difference = $(this).val()
         $('.event__match')
                 .removeClass('hide-difference-matches')
@@ -75,6 +78,8 @@ $(document).ready(function () {
                     return getDifferenceOf(score, difference)
                 })
                 .addClass('hide-difference-matches')
+
+        removeEmptyParentLeagueName()
     })
 
     $("#reset").click(function () {
@@ -82,20 +87,26 @@ $(document).ready(function () {
     });
 
     $('#checkbox_same_ht').change(function () {
+        resetHeader()
         if (this.checked) {
-            $('.event__match:visible')
+            $('.event__match')
                     .removeClass('hide-same-ht-matches')
                     .filter(function () {
                         var score = $(this).find('.event__scores').text().replace(/\s/g, '')
                         var HTscore = $(this).find('.event__part').text().replace(/\s|\(|\)/g, '');
+                        console.log(score)
+                        console.log(HTscore)
                         return score != HTscore;
                     }).addClass('hide-same-ht-matches')
         } else {
             $('.event__match')
                     .removeClass('hide-same-ht-matches')
         }
+
+        removeEmptyParentLeagueName()
     });
     $('#checkbox_losing_home_team').change(function () {
+        resetHeader()
         if (this.checked) {
             $('.event__match')
                     .removeClass('hide-losing-home-matches')
@@ -107,8 +118,11 @@ $(document).ready(function () {
             $('.event__match')
                     .removeClass('hide-losing-home-matches')
         }
+
+        removeEmptyParentLeagueName()
     })
     $('#NG_matches').change(function () {
+        resetHeader()
         if (this.checked) {
             $('.event__match')
                     .removeClass('hide-ng-matches')
@@ -121,22 +135,36 @@ $(document).ready(function () {
             $('.event__match')
                     .removeClass('hide-ng-matches')
         }
+
+        removeEmptyParentLeagueName()
     });
     $('#stage-radio-box').change(function () {
+
+        resetHeader()
+
         var stages = ['live', 'scheduled', 'finished']
         var stage = $("input[name='stage']:checked").val();
-        var globalSelection = $('.event__match');
+        var globalSelection = $('.event__match').removeClass('hide-stage-matches')
+
+        console.log(stage)
+        console.log(stages)
+        console.log('---------------------------------------------------------------------------------------------------------------------------')
+        console.log(globalSelection)
+        console.log('---------------------------------------------------------------------------------------------------------------------------')
+        
         if (stages.includes(stage)) {
             if (stage == 'finished') {
                 $(globalSelection)
                         .filter('.event__match--live,.event__match--scheduled')
-                        .css('display', 'none')
+                        .addClass('hide-stage-matches')
             } else {
                 $(globalSelection)
                         .filter(':not(".event__match--' + stage + '")')
-                        .css('display', 'none')
+                        .addClass('hide-stage-matches')
             }
         }
+
+        removeEmptyParentLeagueName()
     });
     console.log("extension aziscore loaded");
 });
@@ -184,15 +212,12 @@ function sameHTScore(score, goalNumber) {
     }
 }
 
-function resetSelection() {
-    $('.event__header').show()
-    $('.event__match').show()
-}
 // need to wokr on this
 function removeEmptyParentLeagueName() {
-    $('.event__header').filter(function () {
-        return $(this).find('.event__match').length == $(this).find('.event__match').not(':visible').length
-    }).css('display', 'none')
+    $('.event__header').each(function () {
+        var hide = $(this).nextUntil('.event__header', '.event__match:visible').length == 0;
+        $(this).css('display', (hide ? 'none' : 'flex'));
+    });
 }
 
 function homeTeamLosing(score) {
@@ -216,8 +241,8 @@ function no_goals_matches(score) {
 }
 
 function getSearchString(element) {
-    var x = element.find('.event__participant--away').text() 
-    return element.find('.event__participant--home').text() + ' ' + getScore(element, true) + ' ' + x.substring(0,x.length-2)
+    var x = element.find('.event__participant--away').text()
+    return element.find('.event__participant--home').text() + ' ' + getScore(element, true) + ' ' + x.substring(0, x.length - 2)
 }
 
 function getScore(element, split) {
@@ -225,4 +250,18 @@ function getScore(element, split) {
         return element.find('.event__scores').text().replace(/\s/g, '')
     }
     return element.find('.event__scores').text().replace(/\s/g, '').split("-")
+}
+
+// reseting the selection
+function resetMatches() {
+    $('.event__match').show()
+}
+
+function resetHeader() {
+    $('.event__header').show()
+}
+
+function resetSelection() {
+    resetMatches()
+    resetHeader()
 }

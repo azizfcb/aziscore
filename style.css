@@ -23,6 +23,6 @@
 
 }
 
-.hide-range-matches,.hide-difference-matches,.hide-losing-home-matches,.hide-ng-matches{
+.hide-range-matches,.hide-difference-matches,.hide-losing-home-matches,.hide-ng-matches,.hide-same-ht-matches,.hide-stage-matches{
     display: none !important;
 }
